@@ -1,49 +1,70 @@
-import java.util.Scanner;
-import shapes.*;
-
-public class Main {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-
-        System.out.println("1. Circle");
-        System.out.println("2. Rectangle");
-        System.out.println("3. Triangle");
-        System.out.print("Enter your choice: ");
-
-        int choice = sc.nextInt();
-
-        Shape shape;
-
-        switch (choice) {
-            case 1:
-                System.out.print("Enter radius: ");
-                double r = sc.nextDouble();
-                shape = new Circle(r);
-                break;
-
-            case 2:
-                System.out.print("Enter length: ");
-                double l = sc.nextDouble();
-                System.out.print("Enter width: ");
-                double w = sc.nextDouble();
-                shape = new Rectangle(l, w);
-                break;
-
-            case 3:
-                System.out.print("Enter base: ");
-                double b = sc.nextDouble();
-                System.out.print("Enter height: ");
-                double h = sc.nextDouble();
-                shape = new Triangle(b, h);
-                break;
-
-            default:
-                System.out.println("Invalid Choice");
-                sc.close();
-                return;
-        }
-
-        System.out.println("Area = " + shape.area());
-        sc.close();
-    }
+public class ShapeAreaCalculator {
+public static void main(String[] args) {
+System.out.println("----- Shape Area Calculator -----\n");
+ Circle circle = new Circle(5.0);
+ System.out.println("Circle:");
+ System.out.println("Radius = " + circle.getRadius());
+ System.out.println("Area of Circle = " + circle.calculateArea());
+ System.out.println();
+ Rectangle rectangle = new Rectangle(4.0, 6.0);
+ System.out.println("Rectangle:");
+ System.out.println("Length = " + rectangle.getLength() + ", Width = " +
+rectangle.getWidth());
+ System.out.println("Area of Rectangle = " + rectangle.calculateArea());
+ System.out.println();
+ Triangle triangle = new Triangle(3.0, 8.0);
+ System.out.println("Triangle:");
+ System.out.println("Base = " + triangle.getBase() + ", Height = " + triangle.getHeight());
+ System.out.println("Area of Triangle = " + triangle.calculateArea());
+ }
+}
+interface Shape {
+ double calculateArea();
+}
+class Circle implements Shape {
+ private double radius;
+ public Circle(double radius) {
+ this.radius = radius;
+ }
+ public double getRadius() {
+ return radius;
+ }
+ @Override public double calculateArea() {
+ return Math.PI * radius * radius;
+ }
+}
+class Rectangle implements Shape {
+ private double length;
+ private double width;
+ public Rectangle(double length, double width) {
+ this.length = length;
+ this.width = width;
+ }
+ public double getLength() {
+ return length;
+ }
+ public double getWidth() {
+ return width;
+ }
+ @Override
+ public double calculateArea() {
+ return length * width;
+ }
+}
+class Triangle implements Shape {
+ private double base;
+ private double height;
+ public Triangle(double base, double height) {
+ this.base = base;
+ this.height = height;
+ }
+ public double getBase() {
+ return base;
+ }
+ public double getHeight() {
+ return height;
+ } @Override
+ public double calculateArea() {
+ return 0.5 * base * height;
+ }
 }
