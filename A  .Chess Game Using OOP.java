@@ -1,322 +1,303 @@
 import java.util.Scanner;
-
-// Representing individual spots on the board
-class Spot {
-    private int x;
-    private int y;
-    private Piece piece;
-
-    public Spot(int x, int y, Piece piece) {
-        this.x = x;
-        this.y = y;
-        this.piece = piece;
-    }
-
-    public int getX() { return x; }
-    public int getY() { return y; }
-    public Piece getPiece() { return piece; }
-    public void setPiece(Piece piece) { this.piece = piece; }
-}
-
-// Abstract Piece class
+// ===================== PIECE (Abstraction + Encapsulation)
+=====================
+// abstract class -> we can never make "new Piece()", only its children (King, Pawn, etc.)
 abstract class Piece {
-    private boolean white;
-    private boolean killed = false;
-
-    public Piece(boolean white) {
-        this.white = white;
-    }
-
-    public boolean isWhite() { return white; }
-    public boolean isKilled() { return killed; }
-    public void setKilled(boolean killed) { this.killed = killed; }
-
-    public abstract boolean canMove(Board board, Spot start, Spot end);
-    public abstract String getSymbol();
+ private boolean isWhite; // encapsulation: private field
+ private boolean hasMoved;
+ public Piece(boolean isWhite) {
+ this.isWhite = isWhite;
+ this.hasMoved = false;
+ }
+ public boolean isWhite() { return isWhite; }
+ public boolean hasMoved() { return hasMoved; }
+ public void setMoved() { this.hasMoved = true; }
+ // Polymorphism: every piece will define canMove in its OWN way
+ public abstract boolean canMove(Board board, Spot start, Spot end);
+ // Polymorphism: every piece prints a different letter
+ public abstract char getSymbol();
 }
-
-// Pawn Piece
-class Pawn extends Piece {
-    public Pawn(boolean white) { super(white); }
-
-    @Override
-    public String getSymbol() {
-        return isWhite() ? "P" : "p";
-    }
-
-    @Override
-    public boolean canMove(Board board, Spot start, Spot end) {
-        int direction = isWhite() ? 1 : -1;
-        int dx = end.getX() - start.getX();
-        int dy = end.getY() - start.getY();
-
-        // Forward move
-        if (dy == 0 && dx == direction && end.getPiece() == null) {
-            return true;
-        }
-        // Diagonal capture
-        if (Math.abs(dy) == 1 && dx == direction && end.getPiece() != null && end.getPiece().isWhite() != this.isWhite()) {
-            return true;
-        }
-        return false;
-    }
-}
-
-// Rook Piece
-class Rook extends Piece {
-    public Rook(boolean white) { super(white); }
-
-    @Override
-    public String getSymbol() {
-        return isWhite() ? "R" : "r";
-    }
-
-    @Override
-    public boolean canMove(Board board, Spot start, Spot end) {
-        return (start.getX() == end.getX() || start.getY() == end.getY());
-    }
-}
-
-// Knight Piece
-class Knight extends Piece {
-    public Knight(boolean white) { super(white); }
-
-    @Override
-    public String getSymbol() {
-        return isWhite() ? "N" : "n";
-    }
-
-    @Override
-    public boolean canMove(Board board, Spot start, Spot end) {
-        int dx = Math.abs(start.getX() - end.getX());
-        int dy = Math.abs(start.getY() - end.getY());
-        return dx * dy == 2;
-    }
-}
-
-// Bishop Piece
-class Bishop extends Piece {
-    public Bishop(boolean white) { super(white); }
-
-    @Override
-    public String getSymbol() {
-        return isWhite() ? "B" : "b";
-    }
-
-    @Override
-    public boolean canMove(Board board, Spot start, Spot end) {
-        return Math.abs(start.getX() - end.getX()) == Math.abs(start.getY() - end.getY());
-    }
-}
-
-// Queen Piece
-class Queen extends Piece {
-    public Queen(boolean white) { super(white); }
-
-    @Override
-    public String getSymbol() {
-        return isWhite() ? "Q" : "q";
-    }
-
-    @Override
-    public boolean canMove(Board board, Spot start, Spot end) {
-        int dx = Math.abs(start.getX() - end.getX());
-        int dy = Math.abs(start.getY() - end.getY());
-        return (dx == dy) || (start.getX() == end.getX() || start.getY() == end.getY());
-    }
-}
-
-// King Piece
+// ===================== KING =====================
 class King extends Piece {
-    public King(boolean white) { super(white); }
-
-    @Override
-    public String getSymbol() {
-        return isWhite() ? "K" : "k";
-    }
-
-    @Override
-    public boolean canMove(Board board, Spot start, Spot end) {
-        int dx = Math.abs(start.getX() - end.getX());
-        int dy = Math.abs(start.getY() - end.getY());
-        return dx <= 1 && dy <= 1;
-    }
+ public King(boolean isWhite) { super(isWhite); }
+ @Override
+ public boolean canMove(Board board, Spot start, Spot end) {
+ int dx = Math.abs(start.getX() - end.getX());
+ int dy = Math.abs(start.getY() - end.getY());
+ if (dx > 1 || dy > 1) return false; // king moves only 1 step
+ return Board.destinationOk(this, end);
+ }
+ @Override
+ public char getSymbol() { return isWhite() ? 'K' : 'k'; }
 }
-
-// Chess Board
+// ===================== QUEEN ===================== class Queen extends Piece {
+ public Queen(boolean isWhite) { super(isWhite); }
+ @Override
+ public boolean canMove(Board board, Spot start, Spot end) {
+ boolean straight = (start.getX() == end.getX() || start.getY() == end.getY());
+ boolean diagonal = Math.abs(start.getX() - end.getX()) == Math.abs(start.getY() -
+end.getY());
+ if (!straight && !diagonal) return false;
+ if (!board.isPathClear(start, end)) return false;
+ return Board.destinationOk(this, end);
+ }
+ @Override
+ public char getSymbol() { return isWhite() ? 'Q' : 'q'; }
+}
+// ===================== ROOK =====================
+class Rook extends Piece {
+ public Rook(boolean isWhite) { super(isWhite); }
+ @Override
+ public boolean canMove(Board board, Spot start, Spot end) {
+ if (start.getX() != end.getX() && start.getY() != end.getY()) return false; // must be
+straight line
+ if (!board.isPathClear(start, end)) return false;
+ return Board.destinationOk(this, end);
+ }
+ @Override
+ public char getSymbol() { return isWhite() ? 'R' : 'r'; }
+}
+// ===================== BISHOP =====================
+class Bishop extends Piece {
+ public Bishop(boolean isWhite) { super(isWhite); }
+ @Override
+ public boolean canMove(Board board, Spot start, Spot end) {
+ if (Math.abs(start.getX() - end.getX()) != Math.abs(start.getY() - end.getY())) return
+false; // must be diagonal
+ if (!board.isPathClear(start, end)) return false;
+ return Board.destinationOk(this, end);
+ } @Override
+ public char getSymbol() { return isWhite() ? 'B' : 'b'; }
+}
+// ===================== KNIGHT =====================
+class Knight extends Piece {
+ public Knight(boolean isWhite) { super(isWhite); }
+ @Override
+ public boolean canMove(Board board, Spot start, Spot end) {
+ int dx = Math.abs(start.getX() - end.getX());
+ int dy = Math.abs(start.getY() - end.getY());
+ boolean lShape = (dx == 1 && dy == 2) || (dx == 2 && dy == 1); // knight moves in
+"L" shape
+ if (!lShape) return false;
+ return Board.destinationOk(this, end);
+ }
+ @Override
+ public char getSymbol() { return isWhite() ? 'N' : 'n'; }
+}
+// ===================== PAWN =====================
+class Pawn extends Piece {
+ public Pawn(boolean isWhite) { super(isWhite); }
+ @Override
+ public boolean canMove(Board board, Spot start, Spot end) {
+ int direction = isWhite() ? 1 : -1; // white moves up (+row), black moves down (-row)
+ int startRow = isWhite() ? 1 : 6;
+ int dx = end.getX() - start.getX(); // column change
+ int dy = end.getY() - start.getY(); // row change
+ Piece target = end.getPiece();
+ // straight move (no capture allowed straight)
+ if (dx == 0 && target == null) {
+ if (dy == direction) return true;
+ if (dy == 2 * direction && start.getY() == startRow && board.isPathClear(start,
+end)) return true;
+ return false;
+ }
+ // diagonal capture only if (Math.abs(dx) == 1 && dy == direction) {
+ return target != null && target.isWhite() != this.isWhite();
+ }
+ return false;
+ }
+ @Override
+ public char getSymbol() { return isWhite() ? 'P' : 'p'; }
+}
+// ===================== SPOT (a single square) =====================
+class Spot {
+ private final int x; // column 0-7 (a-h)
+ private final int y; // row 0-7 (rank1-rank8)
+ private Piece piece; // null = empty
+ public Spot(int x, int y, Piece piece) {
+ this.x = x; this.y = y; this.piece = piece;
+ }
+ public int getX() { return x; }
+ public int getY() { return y; }
+ public Piece getPiece() { return piece; }
+ public void setPiece(Piece piece) { this.piece = piece; }
+ public boolean isEmpty() { return piece == null; }
+}
+// ===================== BOARD =====================
 class Board {
-    Spot[][] boxes = new Spot[8][8];
-
-    public Board() {
-        this.resetBoard();
-    }
-
-    public Spot getBox(int x, int y) {
-        if (x < 0 || x > 7 || y < 0 || y > 7) return null;
-        return boxes[x][y];
-    }
-
-    public void resetBoard() {
-        // Black pieces (rows 6 and 7)
-        boxes[7][0] = new Spot(7, 0, new Rook(false));
-        boxes[7][1] = new Spot(7, 1, new Knight(false));
-        boxes[7][2] = new Spot(7, 2, new Bishop(false));
-        boxes[7][3] = new Spot(7, 3, new Queen(false));
-        boxes[7][4] = new Spot(7, 4, new King(false));
-        boxes[7][5] = new Spot(7, 5, new Bishop(false));
-        boxes[7][6] = new Spot(7, 6, new Knight(false));
-        boxes[7][7] = new Spot(7, 7, new Rook(false));
-
-        for (int j = 0; j < 8; j++) {
-            boxes[6][j] = new Spot(6, j, new Pawn(false));
-        }
-
-        // Empty spots
-        for (int i = 2; i < 6; i++) {
-            for (int j = 0; j < 8; j++) {
-                boxes[i][j] = new Spot(i, j, null);
-            }
-        }
-
-        // White pieces (rows 0 and 1)
-        for (int j = 0; j < 8; j++) {
-            boxes[1][j] = new Spot(1, j, new Pawn(true));
-        }
-
-        boxes[0][0] = new Spot(0, 0, new Rook(true));
-        boxes[0][1] = new Spot(0, 1, new Knight(true));
-        boxes[0][2] = new Spot(0, 2, new Bishop(true));
-        boxes[0][3] = new Spot(0, 3, new Queen(true));
-        boxes[0][4] = new Spot(0, 4, new King(true));
-        boxes[0][5] = new Spot(0, 5, new Bishop(true));
-        boxes[0][6] = new Spot(0, 6, new Knight(true));
-        boxes[0][7] = new Spot(0, 7, new Rook(true));
-    }
-
-    public void printBoard() {
-        for (int i = 7; i >= 0; i--) {
-            System.out.print((i + 1) + " ");
-            for (int j = 0; j < 8; j++) {
-                Piece p = boxes[i][j].getPiece();
-                if (p == null) {
-                    System.out.print(". ");
-                } else {
-                    System.out.print(p.getSymbol() + " ");
-                }
-            }
-            System.out.println();
-        }
-        System.out.println("  a b c d e f g h\n");
-    }
+ private Spot[][] spots; // spots[row][col] row0=rank1 ... row7=rank8
+ public Board() {
+ spots = new Spot[8][8];
+ for (int y = 0; y < 8; y++)
+ for (int x = 0; x < 8; x++)
+ spots[y][x] = new Spot(x, y, null);
+ setup();
+ }
+ private void setup() {
+ // back rank order: Rook Knight Bishop Queen King Bishop Knight Rook
+ Class<?>[] order = { Rook.class, Knight.class, Bishop.class, Queen.class,
+ King.class, Bishop.class, Knight.class, Rook.class };
+ for (int x = 0; x < 8; x++) { place(x, 0, makePiece(order[x], true)); // white back rank
+ place(x, 1, new Pawn(true)); // white pawns
+ place(x, 6, new Pawn(false)); // black pawns
+ place(x, 7, makePiece(order[x], false)); // black back rank
+ }
+ }
+ private Piece makePiece(Class<?> type, boolean white) {
+ if (type == Rook.class) return new Rook(white);
+ if (type == Knight.class) return new Knight(white);
+ if (type == Bishop.class) return new Bishop(white);
+ if (type == Queen.class) return new Queen(white);
+ return new King(white);
+ }
+ private void place(int x, int y, Piece p) { spots[y][x].setPiece(p); }
+ public Spot getSpot(int x, int y) { return spots[y][x]; }
+ // helper used by all sliding pieces (rook/bishop/queen) to check the road is empty
+ public boolean isPathClear(Spot start, Spot end) {
+ int dx = Integer.signum(end.getX() - start.getX());
+ int dy = Integer.signum(end.getY() - start.getY());
+ int x = start.getX() + dx, y = start.getY() + dy;
+ while (x != end.getX() || y != end.getY()) {
+ if (!spots[y][x].isEmpty()) return false;
+ x += dx; y += dy;
+ }
+ return true;
+ }
+ // destination must be empty OR hold an enemy piece
+ public static boolean destinationOk(Piece mover, Spot end) {
+ return end.isEmpty() || end.getPiece().isWhite() != mover.isWhite();
+ }
+ // find king spot of given color
+ public Spot findKing(boolean white) {
+ for (int y = 0; y < 8; y++)
+ for (int x = 0; x < 8; x++) {
+ Piece p = spots[y][x].getPiece();
+ if (p instanceof King && p.isWhite() == white) return spots[y][x];
+ }
+ return null; }
+ // is the king of this color currently under attack?
+ public boolean isInCheck(boolean white) {
+ Spot kingSpot = findKing(white);
+ for (int y = 0; y < 8; y++)
+ for (int x = 0; x < 8; x++) {
+ Piece p = spots[y][x].getPiece();
+ if (p != null && p.isWhite() != white) {
+ if (p.canMove(this, spots[y][x], kingSpot)) return true;
+ }
+ }
+ return false;
+ }
+ // try every legal-looking move for a color; if none escapes check -> checkmate
+ public boolean isCheckmate(boolean white) {
+ if (!isInCheck(white)) return false;
+ for (int y1 = 0; y1 < 8; y1++)
+ for (int x1 = 0; x1 < 8; x1++) {
+ Piece p = spots[y1][x1].getPiece();
+ if (p == null || p.isWhite() != white) continue;
+ for (int y2 = 0; y2 < 8; y2++)
+ for (int x2 = 0; x2 < 8; x2++) {
+ Spot start = spots[y1][x1], end = spots[y2][x2];
+ if (start == end || !p.canMove(this, start, end)) continue;
+ Piece captured = end.getPiece();
+ end.setPiece(p); start.setPiece(null); // try the move
+ boolean stillInCheck = isInCheck(white);
+ start.setPiece(p); end.setPiece(captured); // undo
+ if (!stillInCheck) return false; // found an escape
+ }
+ }
+ return true;
+ }
+ public void print() {
+ for (int y = 7; y >= 0; y--) {
+ System.out.print((y + 1) + " ");
+ for (int x = 0; x < 8; x++) {
+ Piece p = spots[y][x].getPiece();
+ System.out.print((p == null ? "." : p.getSymbol()) + " ");
+ }
+ System.out.println(); }
+ System.out.println(" a b c d e f g h");
+ }
 }
-
-// Player Class
+// ===================== PLAYER =====================
 class Player {
-    private String name;
-    private boolean whiteSide;
-
-    public Player(String name, boolean whiteSide) {
-        this.name = name;
-        this.whiteSide = whiteSide;
-    }
-
-    public boolean isWhiteSide() { return whiteSide; }
+ private final boolean isWhite;
+ public Player(boolean isWhite) { this.isWhite = isWhite; }
+ public boolean isWhite() { return isWhite; }
+ public String getName() { return isWhite ? "White" : "Black"; }
 }
-
-// Move Class
+// ===================== MOVE =====================
 class Move {
-    private Spot start;
-    private Spot end;
-    private Piece pieceMoved;
-    private Piece pieceKilled;
-
-    public Move(Spot start, Spot end) {
-        this.start = start;
-        this.end = end;
-        this.pieceMoved = start.getPiece();
-    }
-
-    public Spot getStart() { return start; }
-    public Spot getEnd() { return end; }
-    public Piece getPieceMoved() { return pieceMoved; }
+ private final Spot start, end;
+ public Move(Spot start, Spot end) { this.start = start; this.end = end; }
+ public Spot getStart() { return start; }
+ public Spot getEnd() { return end; }
 }
-
-// Main Game Controller
-public class ChessGame {
-    private Board board = new Board();
-    private Player currentTurn;
-
-    public static void main(String[] args) {
-        ChessGame game = new ChessGame();
-        game.start();
-    }
-
-    public void start() {
-        Scanner scanner = new Scanner(System.in);
-        Player white = new Player("White", true);
-        Player black = new Player("Black", false);
-        currentTurn = white;
-
-        System.out.println("----- Chess Game (Console Version) -----\n");
-        System.out.println("Initial Board Setup:");
-        board.printBoard();
-
-        while (true) {
-            System.out.println((currentTurn.isWhiteSide() ? "White's" : "Black's") + " turn.");
-            System.out.print("Enter move (e.g., e2 e4): ");
-            String input = scanner.nextLine().trim();
-
-            if (input.equalsIgnoreCase("exit")) break;
-
-            String[] parts = input.split("\\s+");
-            if (parts.length != 2) {
-                System.out.println("Invalid input format! Use format like 'e2 e4'.\n");
-                continue;
-            }
-
-            int[] startCoords = parseCoord(parts[0]);
-            int[] endCoords = parseCoord(parts[1]);
-
-            if (startCoords == null || endCoords == null) {
-                System.out.println("Invalid coordinate values.\n");
-                continue;
-            }
-
-            Spot start = board.getBox(startCoords[0], startCoords[1]);
-            Spot end = board.getBox(endCoords[0], endCoords[1]);
-            Piece sourcePiece = start.getPiece();
-
-            if (sourcePiece == null || sourcePiece.isWhite() != currentTurn.isWhiteSide()) {
-                System.out.println("Invalid selection! Choose your own piece.\n");
-                continue;
-            }
-
-            if (!sourcePiece.canMove(board, start, end)) {
-                System.out.println("Error: Pawn cannot move diagonally without capturing.\n");
-                continue;
-            }
-
-            // Execute move
-            end.setPiece(sourcePiece);
-            start.setPiece(null);
-
-            String pieceName = sourcePiece.getClass().getSimpleName();
-            System.out.println(pieceName + " moved from " + parts[0] + " to " + parts[1] + ".\n");
-
-            board.printBoard();
-
-            // Toggle turn
-            currentTurn = (currentTurn == white) ? black : white;
-        }
-
-        scanner.close();
-    }
-
-    private int[] parseCoord(String coord) {
-        if (coord.length() != 2) return null;
-        int col = coord.charAt(0) - 'a';
-        int row = coord.charAt(1) - '1';
-        if (col < 0 || col > 7 || row < 0 || row > 7) return null;
-        return new int[]{row, col};
-    }
+// ===================== GAME =====================
+class Game {
+ private Board board;
+ private Player white, black;
+ private boolean whiteTurn = true;
+ private Scanner sc = new Scanner(System.in);
+ public Game() {
+ board = new Board();
+ white = new Player(true);
+ black = new Player(false);
+ }
+ private Spot parse(String pos) {
+ int col = pos.charAt(0) - 'a';
+ int row = pos.charAt(1) - '1';
+ if (col < 0 || col > 7 || row < 0 || row > 7) return null;
+ return board.getSpot(col, row);
+ }
+ public void play() {
+ System.out.println("=== Chess Game (Console Version) ===");
+ System.out.println("Initial Board Setup:"); board.print();
+ while (true) {
+ Player current = whiteTurn ? white : black;
+ System.out.println(current.getName() + "'s turn.");
+ System.out.print("Enter move (e.g., e2 e4), or 'quit': ");
+ if (!sc.hasNextLine()) { System.out.println("No more input. Ending game."); return; }
+ String line = sc.nextLine().trim();
+ if (line.equalsIgnoreCase("quit")) { System.out.println("Game ended."); return; }
+ String[] parts = line.split("\\s+");
+ if (parts.length != 2) { System.out.println("Error: type like 'e2 e4'."); continue; }
+ Spot start = parse(parts[0]);
+ Spot end = parse(parts[1]);
+ if (start == null || end == null) { System.out.println("Error: bad square name.");
+continue; }
+ Piece piece = start.getPiece();
+ if (piece == null) { System.out.println("Error: no piece on " + parts[0]); continue; }
+ if (piece.isWhite() != current.isWhite()) { System.out.println("Error: that's not your
+piece."); continue; }
+ if (!piece.canMove(board, start, end)) { System.out.println("Error: illegal move for
+this piece."); continue; }
+ // try move, reject if it leaves own king in check
+ Piece captured = end.getPiece();
+ end.setPiece(piece); start.setPiece(null);
+ if (board.isInCheck(current.isWhite())) {
+ start.setPiece(piece); end.setPiece(captured);
+ System.out.println("Error: move leaves your King in check.");
+ continue;
+ }
+ piece.setMoved();
+ System.out.println(piece.getClass().getSimpleName() + " moved from " + parts[0] + "
+to " + parts[1] + ".");
+ board.print();
+ boolean opponentWhite = !current.isWhite();
+ if (board.isInCheck(opponentWhite)) {
+ if (board.isCheckmate(opponentWhite)) {
+ System.out.println("Checkmate! " + current.getName() + " wins the game.");
+ return; }
+ System.out.println("Check! " + (opponentWhite ? "White" : "Black") + "'s King is
+in check.");
+ }
+ whiteTurn = !whiteTurn;
+ }
+ }
+}
+// ===================== MAIN =====================
+public class Main {
+ public static void main(String[] args) {
+ new Game().play();
+ }
 }
