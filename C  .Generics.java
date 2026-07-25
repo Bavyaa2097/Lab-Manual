@@ -1,84 +1,71 @@
-// Step 2: Generic class Box<T>
-class Box<T> {
-    private T item;
-
-    public void set(T item) {
-        this.item = item;
-    }
-
-    public T get() {
-        return item;
-    }
-
-    public void showType() {
-        if (item != null) {
-            System.out.println("Type of stored item : " + item.getClass().getName());
-        }
-    }
-}
-
-// Step 3: Generic class Pair<K, V>
-class Pair<K, V> {
-    private K key;
-    private V value;
-
-    public Pair(K key, V value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    public void display() {
-        System.out.println(key + " = " + value);
-    }
-}
-
-public class GenericDemo {
-
-    // Step 4: Generic method findMax() with a bounded type parameter <T extends Comparable<T>>
-    public static <T extends Comparable<T>> T findMax(T[] array) {
-        if (array == null || array.length == 0) {
-            return null;
-        }
-        T max = array[0];
-        for (T element : array) {
-            if (element.compareTo(max) > 0) {
-                max = element;
-            }
-        }
-        return max;
-    }
-
-    public static void main(String[] args) {
-        // Step 5: Create a Box<Integer> object, store a value, and display it
-        Box<Integer> intBox = new Box<>();
-        intBox.set(100);
-        System.out.println("Integer Box Value : " + intBox.get());
-        intBox.showType();
-
-        // Step 6: Create a Box<String> object, repeat store-and-display steps
-        Box<String> strBox = new Box<>();
-        strBox.set("Hello Generics");
-        System.out.println("String Box Value : " + strBox.get());
-        strBox.showType();
-
-        System.out.println("\n---- Key-Value Pairs ----");
-        
-        // Step 7: Create two Pair objects with different type combinations
-        Pair<String, Integer> pair1 = new Pair<>("Rahul", 88);
-        Pair<Integer, String> pair2 = new Pair<>(101, "CSE");
-
-        pair1.display();
-        pair2.display();
-
-        System.out.println();
-
-        // Step 8: Create Integer, String, and Double arrays and pass each to findMax()
-        Integer[] intArray = {25, 89, 45, 12};
-        String[] strArray = {"Rahul", "Sneha", "Kiran", "Arjun"};
-        Double[] doubleArray = {45.5, 92.3, 78.1, 12.4};
-
-        System.out.println("Maximum Number : " + findMax(intArray));
-        System.out.println("Maximum (Alphabetical) : " + findMax(strArray));
-        System.out.println("Maximum Marks : " + findMax(doubleArray));
-    }
-}
+import java.util.*;
+import java.util.stream.*;
+public class EmployeeAnalytics {
+ static class Employee {
+ int id;
+ String name;
+ String department;
+ double salary;
+ public Employee(int id, String name, String department, double salary) {
+ this.id = id;
+ this.name = name;
+ this.department = department;
+ this.salary = salary;
+ }
+ public int getId() { return id; }
+ public String getName() { return name; }
+ public String getDepartment() { return department; }
+ public double getSalary() { return salary; }
+ @Override
+ public String toString() {
+ return id + "\t" + name + "\t" + department + "\t" + salary;
+ }
+ }
+ public static void main(String[] args) {
+ List<Employee> employees = Arrays.asList(
+ new Employee(101, "Rahul", "CSE", 55000.0),
+ new Employee(102, "Sneha", "ECE", 62000.0),
+ new Employee(103, "Kiran", "CSE", 48000.0),
+ new Employee(104, "Divya", "MECH", 51000.0),
+ new Employee(105, "Arjun", "ECE", 70000.0)
+ );
+ System.out.println("---- All Employees ----");
+ employees.forEach(System.out::println);
+ System.out.println("\n---- Salary Above 50000 (High to Low) ----"); employees.stream()
+ .filter(e -> e.getSalary() > 50000)
+ .sorted((e1, e2) -> Double.compare(e2.getSalary(), e1.getSalary()))
+ .forEach(e -> System.out.println(e.getName() + " -> " + e.getSalary()));
+ System.out.println("\n---- Employee Names ----");
+ List<String> names = employees.stream()
+ .map(Employee::getName)
+ .collect(Collectors.toList());
+ System.out.println(names);
+ System.out.println("\n---- Employees Grouped by Department ----");
+ Map<String, List<String>> groupedByDept = employees.stream()
+ .collect(Collectors.groupingBy(
+ Employee::getDepartment,
+ Collectors.mapping(Employee::getName, Collectors.toList())
+ ));
+ groupedByDept.forEach((dept, empNames) -> System.out.println(dept + " : " +
+empNames));
+ System.out.println("\n---- Average Salary per Department ----");
+ Map<String, Double> avgSalaryByDept = employees.stream()
+ .collect(Collectors.groupingBy(
+ Employee::getDepartment,
+ Collectors.averagingDouble(Employee::getSalary)
+ ));
+ avgSalaryByDept.forEach((dept, avg) -> System.out.printf("%s : %.2f%n", dept, avg));
+ double totalSalary = employees.stream()
+ .map(Employee::getSalary)
+ .reduce(0.0, Double::sum);
+ System.out.println("\nTotal Salary Paid : " + String.format("%.2f", totalSalary));
+ long cseCount = employees.stream()
+ .filter(e -> e.getDepartment().equals("CSE"))
+ .count();
+ System.out.println("Number of CSE Employees : " + cseCount);
+ Optional<Employee> highestPaid = employees.stream()
+ .max(Comparator.comparingDouble(Employee::getSalary));
+ highestPaid.ifPresent(e ->
+ System.out.println("Highest Paid : " + e.getName() + " (" + e.getSalary() + ")")
+ );
+ } }
