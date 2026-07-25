@@ -1,102 +1,49 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-
-public class StudentRegistration extends JFrame implements ActionListener {
-
-    JLabel l1, l2, l3, l4, l5;
-    JTextField t1, t2;
-    JComboBox<String> course;
-    JRadioButton male, female;
-    JCheckBox java, python;
-    JButton submit, clear;
-    JTextArea area;
-    ButtonGroup bg;
-
-    public StudentRegistration() {
-
-        setTitle("Student Registration Form");
-        setLayout(new FlowLayout());
-
-        l1 = new JLabel("Roll Number:");
-        t1 = new JTextField(15);
-
-        l2 = new JLabel("Name:");
-        t2 = new JTextField(15);
-
-        l3 = new JLabel("Course:");
-        String c[] = {"Computer Science", "IT", "ECE", "EEE"};
-        course = new JComboBox<>(c);
-
-        l4 = new JLabel("Gender:");
-        male = new JRadioButton("Male");
-        female = new JRadioButton("Female");
-        bg = new ButtonGroup();
-        bg.add(male);
-        bg.add(female);
-
-        l5 = new JLabel("Skills:");
-        java = new JCheckBox("Java");
-        python = new JCheckBox("Python");
-
-        submit = new JButton("Submit");
-        clear = new JButton("Clear");
-
-        area = new JTextArea(8, 30);
-
-        add(l1); add(t1);
-        add(l2); add(t2);
-        add(l3); add(course);
-        add(l4); add(male); add(female);
-        add(l5); add(java); add(python);
-        add(submit); add(clear);
-        add(area);
-
-        submit.addActionListener(this);
-        clear.addActionListener(this);
-
-        setSize(400, 400);
-        setVisible(true);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    }
-
-    public void actionPerformed(ActionEvent e) {
-
-        if (e.getSource() == submit) {
-
-            if (t1.getText().isEmpty() || t2.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill all mandatory fields");
-                return;
-            }
-
-            String gender = male.isSelected() ? "Male" : "Female";
-
-            String skills = "";
-            if (java.isSelected()) skills += "Java ";
-            if (python.isSelected()) skills += "Python";
-
-            area.setText(
-                "Student Details\n\n" +
-                "Roll No : " + t1.getText() +
-                "\nName : " + t2.getText() +
-                "\nCourse : " + course.getSelectedItem() +
-                "\nGender : " + gender +
-                "\nSkills : " + skills
-            );
-
-        } else {
-
-            t1.setText("");
-            t2.setText("");
-            bg.clearSelection();
-            java.setSelected(false);
-            python.setSelected(false);
-            course.setSelectedIndex(0);
-            area.setText("");
-        }
-    }
-
-    public static void main(String[] args) {
-        new StudentRegistration();
-    }
+import java.util.Scanner;
+public class Main {
+ public static void main(String[] args) {
+ Scanner sc = new Scanner(System.in);
+ System.out.println("----------------------------------------------------");
+ System.out.println(" STUDENT REGISTRATION FORM");
+ System.out.println("----------------------------------------------------");
+ System.out.print("USN : ");
+ String usn = sc.nextLine().trim();
+ System.out.print("Name : ");
+ String name = sc.nextLine().trim();
+ if (usn.isEmpty() || name.isEmpty()) {
+ System.out.println("\nValidation Error: USN and Name are mandatory fields!");
+ return;
+ }
+ System.out.println("Branch options : 1) Computer Science 2) Electronics 3)
+Mechanical 4) Civil");
+ System.out.print("Choose branch (1-4): ");
+ int branchChoice = Integer.parseInt(sc.nextLine().trim());
+ String branch;
+ if (branchChoice == 1) branch = "Computer Science";
+ else if (branchChoice == 2) branch = "Electronics";
+ else if (branchChoice == 3) branch = "Mechanical";
+ else branch = "Civil";
+ System.out.print("Gender (M/F) : ");
+ String genderInput = sc.nextLine().trim().toUpperCase();
+ String gender;
+ if (genderInput.equals("M")) gender = "Male";
+ else if (genderInput.equals("F")) gender = "Female";
+ else gender = "Not Selected";
+ System.out.print("Skills - Java? (y/n): ");
+ boolean javaSkill = sc.nextLine().trim().equalsIgnoreCase("y");
+ System.out.print("Skills - Python? (y/n): ");
+ boolean pythonSkill = sc.nextLine().trim().equalsIgnoreCase("y"); String skills = "";
+ if (javaSkill) skills += "Java ";
+ if (pythonSkill) skills += "Python ";
+ if (skills.isEmpty()) skills = "None";
+ System.out.println();
+ System.out.println("----------------------------------------------------");
+ System.out.println("Student Details");
+ System.out.println("----------------------------------------------------");
+ System.out.println("USN : " + usn);
+ System.out.println("Name : " + name);
+ System.out.println("Branch : " + branch);
+ System.out.println("Gender : " + gender);
+ System.out.println("Skills : " + skills.trim());
+ System.out.println("----------------------------------------------------");
+ }
 }
